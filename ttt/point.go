@@ -1,4 +1,4 @@
-package aigo
+package ttt
 
 import (
 	"fmt"
@@ -7,20 +7,12 @@ import (
 	"strings"
 )
 
-// A point on the board, defined by row and column.
-// uint16 范围 0 ~ 65535 (6万多)
+// row column 采用跟Excel一样的定义， B13 先列后行
+// row  排 ， 行 一排 水平方向
+// column 柱子  列  垂直方向
+
 type Point struct {
 	Row, Col uint16
-}
-
-// 周围上下左右四个位置的坐标
-func (p Point) Neighbors() [4]Point {
-	r := [4]Point{}
-	r[0] = Point{p.Row, p.Col - 1}
-	r[1] = Point{p.Row + 1, p.Col}
-	r[2] = Point{p.Row, p.Col + 1}
-	r[3] = Point{p.Row - 1, p.Col}
-	return r
 }
 
 // 把手工输入的 B17 这样的转换成 2,17
@@ -36,6 +28,6 @@ func PointFromCoords(coords string) *Point {
 
 }
 
-func (p *Point) String() string {
+func (p Point) String() string {
 	return fmt.Sprintf("%s%d", string(COLS[p.Col-1]), p.Row)
 }

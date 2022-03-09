@@ -17,10 +17,10 @@ func TestCapture(t *testing.T) {
 	}
 
 	p := board.Get(Point{2, 2})
-	if p == nil {
+	if p == None {
 		t.Errorf("%v应该有棋子1!", Point{2, 2})
 	}
-	if p != nil && *p != Black {
+	if p != None && p != Black {
 		t.Errorf("%v应该是黑子1!", Point{2, 2})
 	}
 
@@ -29,10 +29,10 @@ func TestCapture(t *testing.T) {
 		t.Error(err)
 	}
 	p = board.Get(Point{2, 2})
-	if p == nil {
+	if p == None {
 		t.Errorf("%v应该有棋子2!", Point{2, 2})
 	}
-	if p != nil && *p != Black {
+	if p != None && p != Black {
 		t.Errorf("%v应该是黑子2!", Point{2, 2})
 	}
 	err = board.PlaceStone(White, Point{2, 3})
@@ -40,10 +40,10 @@ func TestCapture(t *testing.T) {
 		t.Error(err)
 	}
 	p = board.Get(Point{2, 2})
-	if p == nil {
+	if p == None {
 		t.Errorf("%v应该有棋子!3", Point{2, 2})
 	}
-	if p != nil && *p != Black {
+	if p != None && p != Black {
 		t.Errorf("%v应该是黑子3!", Point{2, 2})
 	}
 	err = board.PlaceStone(White, Point{3, 2})
@@ -52,7 +52,7 @@ func TestCapture(t *testing.T) {
 	}
 	// fmt.Println(board.String())
 	p = board.Get(Point{2, 2})
-	if p != nil {
+	if p != None {
 		t.Errorf("%v应该黑子被提了 4!", Point{2, 2})
 	}
 }
@@ -75,11 +75,11 @@ func TestCaptureTwoStones(t *testing.T) {
 	}
 
 	p := board.Get(Point{2, 2})
-	if p == nil || *p != Black {
+	if p == None || p != Black {
 		t.Errorf("位置%v棋子%v不对", Point{2, 2}, p)
 	}
 	p = board.Get(Point{2, 3})
-	if p == nil || *p != Black {
+	if p == None || p != Black {
 		t.Errorf("位置%v棋子%v不对", Point{2, 3}, p)
 	}
 
@@ -91,11 +91,11 @@ func TestCaptureTwoStones(t *testing.T) {
 	}
 
 	p = board.Get(Point{2, 2})
-	if p == nil || *p != Black {
+	if p == None || p != Black {
 		t.Errorf("位置%v棋子%v不对", Point{2, 2}, p)
 	}
 	p = board.Get(Point{2, 3})
-	if p == nil || *p != Black {
+	if p == None || p != Black {
 		t.Errorf("位置%v棋子%v不对", Point{2, 3}, p)
 	}
 
@@ -107,11 +107,11 @@ func TestCaptureTwoStones(t *testing.T) {
 	}
 
 	p = board.Get(Point{2, 2})
-	if p != nil {
+	if p != None {
 		t.Errorf("位置%v棋子%v不对", Point{2, 2}, p)
 	}
 	p = board.Get(Point{2, 3})
-	if p != nil {
+	if p != None {
 		t.Errorf("位置%v棋子%v不对", Point{2, 3}, p)
 	}
 }
@@ -138,17 +138,17 @@ func TestCaptureIsNotSuicide(t *testing.T) {
 	}
 
 	p := board.Get(Point{1, 1})
-	if p != nil {
+	if p != None {
 		t.Errorf("位置%v棋子%v不对", Point{1, 1}, p)
 	}
 
 	p = board.Get(Point{2, 1})
-	if p == nil || *p != White {
+	if p == None || p != White {
 		t.Errorf("位置%v棋子%v不对", Point{2, 1}, p)
 	}
 
 	p = board.Get(Point{1, 2})
-	if p == nil || *p != White {
+	if p == None || p != White {
 		t.Errorf("位置%v棋子%v不对", Point{1, 2}, p)
 	}
 }

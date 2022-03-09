@@ -37,9 +37,9 @@ func (m Move) String() string {
 	if m.IsPlay && !(m.IsPass || m.IsResign) {
 		return fmt.Sprint("Play{", m.Pnt.Row, m.Pnt.Col, "}")
 	} else if m.IsPass && !m.IsResign {
-		return "Pass"
+		return "Pass 跳过"
 	} else if m.IsResign {
-		return "Resign"
+		return "Resign 认输"
 	} else {
 		return "Invalid"
 	}

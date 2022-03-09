@@ -9,11 +9,12 @@ type IAgent interface {
 	SelectMove(gs *GameState) Move
 }
 
-type RandonBot struct {
+// 随机下棋机器人
+type RandomBot struct {
 	IAgent
 }
 
-func (bot RandonBot) SelectMove(gs *GameState) Move {
+func (bot RandomBot) SelectMove(gs *GameState) Move {
 	candidates := []Point{} // 候选可以下棋的点
 
 	for r := uint16(1); r <= uint16(gs.BoardPosition.Height); r++ {

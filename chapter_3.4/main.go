@@ -13,8 +13,8 @@ func main() {
 
 	game := aigo.NewGameOfSize(9, 9)
 	bot := map[aigo.Player]aigo.IAgent{
-		aigo.Black: aigo.RandonBot{},
-		aigo.White: aigo.RandonBot{},
+		aigo.Black: aigo.RandomBot{},
+		aigo.White: aigo.RandomBot{},
 	}
 
 	var err error

@@ -84,7 +84,7 @@ func (b *Board) PrintBoard() string {
 			if !ex {
 				bbuf.WriteString(".") // 空白位置
 			} else if pp == nil {
-				log.Printf("R%dC%d nil ", row, col)
+				log.Printf("Row:%d,Col:%d is nil", row, col)
 			} else {
 				if pp.Color == Black {
 					bbuf.WriteString("X") // 黑棋
@@ -122,14 +122,13 @@ func (b *Board) GetStoneGroup(p Point) *StoneGroup {
 }
 
 // 返回棋盘某个位置的内容
-// nil 空
 // 否则 是具体的棋子颜色
-func (b *Board) Get(p Point) *Player {
+func (b *Board) Get(p Point) Player {
 	sg := b.GetStoneGroup(p)
 	if sg == nil {
-		return nil
+		return None
 	}
-	return &sg.Color
+	return sg.Color
 }
 
 // Method returns a slice of pointers to all unique StoneGroups.
@@ -223,6 +222,7 @@ func (b *Board) PlaceStone(turn Player, p Point) error {
 	}
 	for _, e := range adjacent_opposite_color { // 如果气数为0， 提取棋子
 		if e.NumLiberties() == 0 {
+
 			err := b.removeStones(e)
 			if err != nil {
 				return err
@@ -250,7 +250,8 @@ func (b *Board) removeStones(sg *StoneGroup) error {
 				nsg.AddLiberty(e)
 			}
 		}
-		b.stoneMap[e] = nil
+		delete(b.stoneMap, e)
+		// b.stoneMap[e] = nil 绝对不能这么做，会有问题的。
 
 		// 在 Zobrist哈希中，需要通过逆应用这步动作的哈希值来实现提子
 		b.hash ^= BoardPointHashCode[NewBoardPoint(e.Row, e.Col, sg.Color)]
@@ -322,4 +323,147 @@ func (b *Board) IsOnGrid(p Point) bool {
 // 返回 Zobrist 哈希值
 func (b *Board) GetZobristHash() int64 {
 	return b.hash
+}
+
+// 评估各方领土
+// 假设棋盘上所有死棋都被提走了，然后开始计算胜负
+func (b *Board) EvaluateTerritory() *Territory {
+	visited := make(map[Point]bool)
+	territory_map := make(map[Point]string)
+	for r := uint16(1); r <= b.Height; r++ {
+		for c := uint16(1); c <= b.Width; c++ {
+			p := Point{Row: r, Col: c}
+
+			if _, ex1 := territory_map[p]; ex1 { // 已经分析过这个点了
+				continue
+			}
+
+			stone := b.Get(p)
+			if stone != None {
+				territory_map[p] = stone.String()
+			} else {
+				group, neighbors := b.scoringCollectRegion(p, visited)
+				fill_with := ""
+				if len(neighbors) == 1 {
+					fill_with = fmt.Sprintf("territory_%s", neighbors[0].String())
+				} else {
+					fill_with = "dame"
+				}
+				for _, pos := range group {
+					territory_map[pos] = fill_with
+				}
+			}
+		}
+	}
+
+	territory := &Territory{}
+
+	for point, status := range territory_map {
+
+		switch status {
+		case "Black":
+			territory.NumBlackStones++
+		case "White":
+			territory.NumWhiteStones++
+		case "territory_Black":
+			territory.NumBlackTerritory++
+		case "territory_White":
+			territory.NumWhiteTerritory++
+		case "dame":
+			territory.NumDame++
+			territory.DamePoints = append(territory.DamePoints, point)
+		default:
+			log.Fatalf("错误的状态 %v", status)
+		}
+	}
+	return territory
+}
+
+// 递归收集棋盘空点位置归属
+// start_pos 开始位置
+// visited 用于判断该位置是否已经收集
+// Find the contiguous section of a board containing a point. Also identify all the boundary points.
+// 只有完全被一个棋链包围的才算自己的气
+// all_points 周围所有跟起始点都是空的点集合，这些点都会被递归调用到
+// all_borders 这些空白点的边界情况， （非起始点同色的）
+func (b *Board) scoringCollectRegion(start_pos Point, visited map[Point]bool) (all_points []Point, all_borders []Player) {
+
+	_, ex1 := visited[start_pos]
+	if ex1 { // 已经分析过这个位置了
+		return []Point{}, []Player{}
+	}
+
+	all_points = []Point{start_pos}
+	all_borders = []Player{}
+	visited[start_pos] = true
+	here := b.Get(start_pos)
+	deltas := [4][2]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+	for _, delta := range deltas {
+		delta_r := delta[0]
+		delta_c := delta[1]
+
+		next_p := Point{Row: start_pos.Row + uint16(delta_r), Col: start_pos.Col + uint16(delta_c)}
+		if !b.IsOnGrid(next_p) { // 超出棋盘范围
+			continue
+		}
+
+		neighbor := b.Get(next_p)
+
+		if neighbor == here { // 这个位置是空位，需要判断归属谁？
+
+			// 只有跟起始点同色的才会递归一直找下去。
+			points, borders := b.scoringCollectRegion(next_p, visited)
+			all_points = pointArrMerge(all_points, points)
+			all_borders = playerArrMerge(all_borders, borders)
+		} else {
+			// 增加空白区域的周边信息
+			all_borders = playerArrUpdate(all_borders, neighbor)
+		}
+	}
+
+	return all_points, all_borders
+
+}
+
+// 如果不存在，则增加，存在则不变
+// TODO go 2.0 时优化下
+func playerArrUpdate(arr []Player, p Player) []Player {
+	find := false
+	for _, n := range arr {
+		if n == p {
+			find = true
+		}
+	}
+	if find {
+		return arr
+	}
+	return append(arr, p)
+}
+
+// 两个数组的合并， 重复的作为一项
+func playerArrMerge(arr1, arr2 []Player) []Player {
+	for _, n := range arr2 {
+		arr1 = playerArrUpdate(arr1, n)
+	}
+	return arr1
+}
+
+func pointArrUpdate(arr []Point, p Point) []Point {
+	find := false
+	for _, n := range arr {
+		if n == p {
+			find = true
+		}
+	}
+	if find {
+		return arr
+	}
+	return append(arr, p)
+}
+
+func pointArrMerge(arr1, arr2 []Point) []Point {
+	for _, n := range arr2 {
+		arr1 = pointArrUpdate(arr1, n)
+	}
+	return arr1
 }
