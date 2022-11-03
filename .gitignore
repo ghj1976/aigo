@@ -6,3 +6,8 @@ ttt/playttt/playttt
 chapter_4.4_pruned/chapter_4.4_pruned
 chapter_4.4_alphabeta/chapter_4.4_alphabeta
 chapter_4.5_mcts/chapter_4.5_mcts
+nn/printImage/printImage
+*.png
+nn/pickles2gob/pickles2gob
+nn/average_digits/average_digits
+*.pkl
